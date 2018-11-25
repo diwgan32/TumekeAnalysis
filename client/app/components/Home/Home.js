@@ -48,11 +48,12 @@ class Home extends React.Component {
     this.prevModel = this.prevModel.bind(this);
     this.pullData = this.pullData.bind(this);
     this.initializeSubjectList = this.initializeSubjectList.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   pullData() {
     const {modelNum, currentSubject, listOfSubjects} = this.state;
-    console.log(listOfSubjects)
+    console.log("Subject: " + listOfSubjects[currentSubject] + " Index: " + currentSubject);
     fetch('/api/generate?id=' + (modelNum)+'&subjectID=' + (listOfSubjects[currentSubject]))
       .then(res => res.json())
       .then(json => {
@@ -65,31 +66,25 @@ class Home extends React.Component {
   }
 
   prevModel() {
-    const {_canvas, _scene, modelNum, _camera } = this.state;
+    const {_canvas, _scene, modelNum, _camera} = this.state;
     if (modelNum == 0) return;
-    for (var i = 0; i < _scene.meshes.length; i++) {
-      _scene.meshes[i].dispose();
-      i--;
-    }
-    this.setState({modelNum: modelNum - 1});
-    this.pullData();
-    
+    this.setState({modelNum: modelNum - 1}, function(){this.pullData()});
   }
   
-  onChange(i){
-     this.setState({
-         checked:index
-     });
+  onChange(e){
+    const {currentSubject, checked} = this.state;
+    console.log("Index: " + e.currentTarget.value);
+     
+    this.setState({
+      checked: e.currentTarget.value,
+      currentSubject: e.currentTarget.value
+    }, function() {this.pullData()});
+    
   }
 
   nextModel() {
     const {_canvas, _scene, modelNum, _camera } = this.state;
-    for (var i = 0; i < _scene.meshes.length; i++) {
-      _scene.meshes[i].dispose();
-      i--;
-    }
-    this.setState({modelNum: modelNum + 1});
-    this.pullData();
+    this.setState({modelNum: modelNum + 1}, function(){this.pullData()});
     
   }
   
@@ -103,7 +98,6 @@ class Home extends React.Component {
       .then(json => {
         if (json.success) {
           for (var subjectID of json.subjects) {
-            console.log(subjectID)
             this.setState({listOfSubjects: this.state.listOfSubjects.concat([subjectID])});
             this.pullData();
           }
@@ -114,10 +108,13 @@ class Home extends React.Component {
   }
 
   displayModel(keypointsArray, imageData) {
-    console.log(keypointsArray)
     let jointMapping = {0:[15, 16, 1], 1:[5, 2], 2:[3], 5:[6], 6:[7], 3:[4], 16:[18], 15:[17]}
     let keypointMapping = {0: "Nose", 1: "Neck", 2: "RShoulder", 3: "RElbow", 4: "RWrist", 5: "LShoulder", 6: "LElbow", 7: "LWrist", 8: "MidHip",  9: "RHip", 10: "RKnee", 11: "RAnkle", 12: "LHip", 13: "LKnee", 14: "LAnkle", 15: "REye", 16: "LEye", 17: "REar", 18: "LEar", 19: "LBigToe", 20: "LSmallToe", 21: "LHeel", 22: "RBigToe", 23: "RSmallToe", 24: "RHeel"}
     const { _canvas, _scene, _camera } = this.state;
+    for (var i = 0; i < _scene.meshes.length; i++) {
+      _scene.meshes[i].dispose();
+    }
+  
     this.setState({currImg: imageData});
     for (var key in keypointsArray) {
       if (key == "id" || key == "_id" || 
@@ -256,7 +253,6 @@ class Home extends React.Component {
       }),
     }).then(res => res.json())
       .then(json => {
-        console.log('json', json);
         if (json.success) {
           this.setState({
             signUpError: json.message,
@@ -438,9 +434,9 @@ class Home extends React.Component {
               return <label key={i}>
                 <input 
                     type="radio"
-                    checked={this.state.checked == i? true: false} 
-                    onChange={this.onChange.bind(this,i)} 
-                    key={i+100}
+                    checked={this.state.checked == i} 
+                    onChange={this.onChange}
+                    key={option}
                     value={i} />
                     {option}
                 </label>
