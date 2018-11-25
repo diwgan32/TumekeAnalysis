@@ -27,7 +27,9 @@ class Home extends React.Component {
       _scene: null,
       modelNum: 0,
       _camera: null,
-      currImg: ''
+      currImg: '',
+      listOfSubjects: [],
+      currentSubject: 0
     };
 
     this.onTextboxChangeSignInEmail = this.onTextboxChangeSignInEmail.bind(this);
@@ -43,7 +45,22 @@ class Home extends React.Component {
     this.displayModel = this.displayModel.bind(this);
     this.checkIfCoordIsValid = this.checkIfCoordIsValid.bind(this);
     this.prevModel = this.prevModel.bind(this);
+    this.pullData = this.pullData.bind(this);
+    this.initializeSubjectList = this.initializeSubjectList.bind(this);
+  }
 
+  pullData() {
+    const {modelNum, currentSubject, listOfSubjects} = this.state;
+    console.log(listOfSubjects)
+    fetch('/api/generate?id=' + (modelNum)+'&subjectID=' + (listOfSubjects[currentSubject]))
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          this.displayModel(json.points[0], json.imgDisp);
+        } else {
+          console.log(json)
+        }
+      });
   }
 
   prevModel() {
@@ -53,38 +70,42 @@ class Home extends React.Component {
       _scene.meshes[i].dispose();
       i--;
     }
-    fetch('/api/generate?id=' + (modelNum - 1))
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) {
-          this.displayModel(json.points[0], json.imgDisp);
-        } else {
-          console.log(json)
-        }
-      });
     this.setState({modelNum: modelNum - 1});
+    this.pullData();
+    
   }
+
   nextModel() {
     const {_canvas, _scene, modelNum, _camera } = this.state;
     for (var i = 0; i < _scene.meshes.length; i++) {
       _scene.meshes[i].dispose();
       i--;
     }
-    fetch('/api/generate?id=' + (modelNum + 1))
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) {
-          this.displayModel(json.points[0], json.imgDisp);
-        } else {
-          console.log(json)
-        }
-      });
     this.setState({modelNum: modelNum + 1});
+    this.pullData();
+    
   }
   
   checkIfCoordIsValid(arr) {
     return !(arr[0] == 0 && arr[1] == 0 && arr[2] == 0);
   }
+
+  initializeSubjectList() {
+    fetch('/api/getsubjects')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          for (var subjectID of json.subjects) {
+            console.log(subjectID)
+            this.setState({listOfSubjects: this.state.listOfSubjects.concat([subjectID])});
+            this.pullData();
+          }
+        } else {
+          console.log(json, 'subjectlist')
+        }
+      });
+  }
+
   displayModel(keypointsArray, imageData) {
     console.log(keypointsArray)
     let jointMapping = {0:[15, 16, 1], 1:[5, 2], 2:[3], 5:[6], 6:[7], 3:[4], 16:[18], 15:[17]}
@@ -142,17 +163,8 @@ class Home extends React.Component {
     var pl = new BABYLON.PointLight("pl", new BABYLON.Vector3(0, 0, 0), scene);
     pl.diffuse = new BABYLON.Color3(1, 1, 1);
     pl.intensity = 1.0;
-
-    fetch('/api/generate?id=' + modelNum)
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) {
-          this.displayModel(json.points[0], json.imgDisp);
-        } else {
-          console.log(json)
-        }
-      });
-
+    this.initializeSubjectList();
+    
     scene.getEngine().runRenderLoop(() => {
         if (scene) {
 
@@ -277,7 +289,6 @@ class Home extends React.Component {
       }),
     }).then(res => res.json())
       .then(json => {
-        console.log('json', json);
         if (json.success) {
           setInStorage('the_main_app', { token: json.token });
           this.setState({
@@ -415,7 +426,17 @@ class Home extends React.Component {
           </Row>
         </Grid>
           <Button onClick={this.logout}>Logout</Button>
-
+          {
+            this.state.listOfSubjects.map((option,i)=>{
+              return <label key={i}>
+                <input 
+                    type="radio" 
+                    key={i+100}
+                    value={i} />
+                    {option}
+                </label>
+            })
+          }
       </div>
 
     );
@@ -423,54 +444,3 @@ class Home extends React.Component {
 }
 
 export default Home;
-
-
-// var nb = 20000;       // nb of triangles
-//     var fact = 30;      // cube size
-    
-//    // custom position function for SPS creation
-//    var myPositionFunction = function(particle, i, s) {
-//         particle.position.x = (Math.random() - 0.5) * fact;
-//         particle.position.y = (Math.random() - 0.5) * fact;
-//         particle.position.z = (Math.random() - 0.5) * fact;
-//         particle.rotation.x = Math.random() * 3.15;
-//         particle.rotation.y = Math.random() * 3.15;
-//         particle.rotation.z = Math.random() * 1.5;
-//         particle.color = new BABYLON.Color4(particle.position.x / fact + 0.5, particle.position.y / fact + 0.5, particle.position.z / fact + 0.5, 1.0);
-//     };
- 
-//    // model : triangle
-//    var triangle = BABYLON.MeshBuilder.CreateDisc("t", {tessellation: 3}, scene);
-  
-//     // SPS creation
-//     var SPS = new BABYLON.SolidParticleSystem('SPS', scene);
-//     SPS.addShape(triangle, nb);
-//     var mesh = SPS.buildMesh();
-//     // dispose the model
-//     triangle.dispose();
-    
-//     // SPS init
-//     SPS.initParticles = function () {
-//       for (var p = 0; p < SPS.nbParticles; p++) {
-//         myPositionFunction(SPS.particles[p]);
-//       }
-//     }
-
-//     SPS.updateParticle = function (particle) {
-//       particle.rotation.x += particle.position.z / 100;
-//       particle.rotation.z += particle.position.x / 100;
-//     }
-   
-//     SPS.initParticles();
-//     SPS.setParticles();
-  
-//     // Optimizers after first setParticles() call
-//     // will be used only for the next setParticles() calls
-//     SPS.computeParticleColor = false;
-//     SPS.computeParticleTexture = false;
-
-//     // SPS mesh animation
-//     scene.registerBeforeRender(function() {
-//       pl.position = camera.position;
-//       SPS.setParticles();
-//     });

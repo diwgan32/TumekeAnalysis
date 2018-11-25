@@ -108,6 +108,10 @@ const SubjectDataScheme = new mongoose.Schema({
   fileName: {
   	type: String,
   	default: ""
+  },
+  subjectID: {
+    type: String,
+    default: ""
   }
 });
 module.exports = mongoose.model('SubjectData', SubjectDataScheme);
