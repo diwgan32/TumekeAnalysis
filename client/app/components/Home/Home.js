@@ -29,7 +29,8 @@ class Home extends React.Component {
       _camera: null,
       currImg: '',
       listOfSubjects: [],
-      currentSubject: 0
+      currentSubject: 0,
+      checked: 0
     };
 
     this.onTextboxChangeSignInEmail = this.onTextboxChangeSignInEmail.bind(this);
@@ -73,6 +74,12 @@ class Home extends React.Component {
     this.setState({modelNum: modelNum - 1});
     this.pullData();
     
+  }
+  
+  onChange(i){
+     this.setState({
+         checked:index
+     });
   }
 
   nextModel() {
@@ -430,7 +437,9 @@ class Home extends React.Component {
             this.state.listOfSubjects.map((option,i)=>{
               return <label key={i}>
                 <input 
-                    type="radio" 
+                    type="radio"
+                    checked={this.state.checked == i? true: false} 
+                    onChange={this.onChange.bind(this,i)} 
                     key={i+100}
                     value={i} />
                     {option}
