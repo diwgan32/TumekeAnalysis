@@ -13,6 +13,9 @@ logs
 *.log
 npm-debug.log*
 
+# Static files
+server/static/*
+
 # OS stuff
 Desktop.ini
 ehthumbs.db
